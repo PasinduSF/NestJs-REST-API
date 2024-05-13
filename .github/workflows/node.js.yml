@@ -38,3 +38,5 @@ jobs:
         echo "${{ secrets.SMTP_SERVICE }}" >> .env
     - run: npm run build --if-present
     - run: npm test
+
+    
