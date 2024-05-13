@@ -29,13 +29,13 @@ jobs:
     - run: npm ci
     - run: |
         touch .env
-        echo "${{ secrets.DB_CONNECTION_URL }}" >> .env
-        echo "${{ secrets.JWT_SECRET }}" >> .env
-        echo "${{ secrets.JWT_EXPIRES }}" >> .env
-        echo "${{ secrets.SALT_ROUNDS }}" >> .env
-        echo "${{ secrets.GMAIL_USER }}" >> .env
-        echo "${{ secrets.GMAIL_PASS }}" >> .env
-        echo "${{ secrets.SMTP_SERVICE }}" >> .env
+        echo "${{ secrets.DB_CONNECTION_URL }}" > .env
+        echo "${{ secrets.JWT_SECRET }}" > .env
+        echo "${{ secrets.JWT_EXPIRES }}" > .env
+        echo "${{ secrets.SALT_ROUNDS }}" > .env
+        echo "${{ secrets.GMAIL_USER }}" > .env
+        echo "${{ secrets.GMAIL_PASS }}" > .env
+        echo "${{ secrets.SMTP_SERVICE }}" > .env
     - run: npm run build --if-present
     - run: npm test
 
