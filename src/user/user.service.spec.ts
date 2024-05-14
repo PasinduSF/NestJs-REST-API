@@ -582,7 +582,7 @@ describe('UserService', () => {
         _id: userId,
         type: 'USER',
         status: 'ACTIVE',
-        basic_info: {
+        basic_info: { 
           first_name: 'John',
           last_name: 'Doe',
           gender: genders.male,
