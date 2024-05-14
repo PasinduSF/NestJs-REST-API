@@ -33,7 +33,7 @@ describe ('Adding a User', () =>{
         const validData = {
           type: userTypes.user,
           basic_info: {
-            first_name: '',
+            first_name: 'fff',
             last_name: 'Doe',
             dob: '1990-01-01',
             gender: 'MALE',

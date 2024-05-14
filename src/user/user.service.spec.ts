@@ -574,6 +574,7 @@ describe('UserService', () => {
 
   // User deactivate Unit testing -------------------------------------------------------
   describe('deactivateUser', () => {
+
     it('should deactivate the user and send an email', async () => {
       // Arrange
       const userId = '6639e925a7fe8c2b6d5d0ff2';
@@ -666,5 +667,6 @@ describe('UserService', () => {
         ),
       );
     });
+    
   });
 });
