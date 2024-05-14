@@ -15,6 +15,8 @@ import { User } from './user.schema';
 export default class UserController {
   constructor(private service: UserService) {}
 
+
+// Admin add ----------------------------------------------------
   @Post("adminAdd")
   adminAdd(@Body() signUpDto: SignUpDto): Promise<{message:string}> {
     return this.service.adminAdd(signUpDto)
