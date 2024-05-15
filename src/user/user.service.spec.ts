@@ -566,7 +566,7 @@ describe('UserService', () => {
       });
       expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
         userId,
-        updateUserDto,
+        updateUserDto,  
         { new: true },
       );
     });
