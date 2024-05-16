@@ -44,6 +44,7 @@ export default class UserController {
     return res.status(200).json(result);
   }
 
+  // get users ---------------------------------------------------------
   @UseGuards(AdminGuard) 
   @Get("getUsers")
   async getUsers(): Promise<UserModule[]> {
