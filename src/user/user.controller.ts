@@ -23,15 +23,17 @@ export default class UserController {
   }
 
 // Login ----------------------------------------------------
-  @Post("login")
-  async login(
-    @Body() userLoginDto: UserLoginDto,
-    @Res() res: Response
-  ): Promise<Response<{ access_token: string; user: any }, Record<string, any>>> {
-    const { access_token, user } = await this.service.login(userLoginDto);
-    res.setHeader('Authorization', access_token);
-    return res.status(200).json({ access_token, user });
-  }
+@Post("login")
+async login(
+  @Body() userLoginDto: UserLoginDto,
+  @Body('fcmToken') fcmToken: string, 
+  @Res() res: Response
+): Promise<Response<{ access_token: string; user: any }, Record<string, any>>> {
+  const { access_token, user } = await this.service.login(userLoginDto, fcmToken);
+
+  res.setHeader('Authorization', access_token);
+  return res.status(200).json({ access_token, user });
+}
 
 // userAdd ---------------------------------------------------------
   @UseGuards(AdminGuard)

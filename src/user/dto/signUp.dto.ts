@@ -58,6 +58,8 @@ class SignUpDto {
   @IsNotEmpty()
   type: string ;
 
+  @Transform(({ value }) => value.trim())
+  fcmToken: string ;
 
   @IsNotEmpty()
   @ValidateNested()

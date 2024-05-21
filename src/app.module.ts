@@ -8,6 +8,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtModuleAsyncOptions } from './config/jwt.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { mailerAsyncOptions } from './config/mailer.config';
+import { FirebaseModule } from './firebase.module';
+import { NotificationModule } from './notification/notification.module';
 
 
 @Module({
@@ -19,8 +21,10 @@ import { mailerAsyncOptions } from './config/mailer.config';
     JwtModule.registerAsync(jwtModuleAsyncOptions),
     MailerModule.forRootAsync(mailerAsyncOptions),
     UserModule,
+    FirebaseModule,
+    NotificationModule
     
-    
+  
   ],
   controllers: [],
   providers: [],

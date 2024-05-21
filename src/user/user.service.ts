@@ -16,6 +16,10 @@ import UserLoginDto from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
 import UpdateUserDto from './dto/updateUser.dto';
 import { MailerService } from '@nestjs-modules/mailer';
+import { NotificationService } from 'src/notification/notification.service';
+import UpdateUserFcmDto from './dto/dto.updateFcmToken';
+import statuses from 'src/constants/statuses';
+
 
 // Helper function to remove spaces and special characters from a string
 function cleanMobileNumber(mobileNumber: string) {
@@ -33,19 +37,37 @@ export default class UserService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailService: MailerService,
+    private notificationService: NotificationService,
   ) {}
+
+  async updateUserFCM(
+    userId: string,
+    updateUserDto: UpdateUserFcmDto,
+  ): Promise<{ message: string }> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { fcmToken: updateUserDto.fcmToken },
+      { new: true },
+    );
+  
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+  
+    return { message: 'User update successfully' };
+  }
+
 
   // Login service ---------------------------------------------------------------------------------
   async login(
     userLoginDto: UserLoginDto,
+    fcmToken1: string
   ): Promise<{ access_token: string; user: any }> {
     const { email, password } = userLoginDto;
     const user = await this.userModel.findOne({ 'contact_info.email': email });
+    
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
-    }
-    if (user.type !== 'ADMIN') {
-      throw new UnauthorizedException('Unauthorized');
     }
     const isPasswordMatched = bcrypt.compareSync(
       password,
@@ -54,11 +76,26 @@ export default class UserService {
     if (!isPasswordMatched) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    if(user.status === statuses.inactive){
+      throw new UnauthorizedException('Your account has been deactivated');
+    }
+
+    const updateUserFcmDto : UpdateUserFcmDto ={
+      fcmToken: fcmToken1
+    }
+    await this.updateUserFCM(user._id.toString(), updateUserFcmDto);
+
+     // Fetch the updated user from the database
+    const updatedUser = await this.userModel.findById(user._id);
+  
     const payload = { id: user._id, type: user.type };
-    const access_token = await this.jwtService.signAsync(payload);
-    console.log(access_token);
-    return { access_token, user };
+    const access_token = await this.jwtService.signAsync(payload,{expiresIn: '1h'});
+  
+    return { access_token, user: updatedUser };
   }
+  
+
 
   // Admin add service -------------------------------------------------------------------------------
   async adminAdd(signUpDto: SignUpDto): Promise<{ message: string }> {
@@ -87,9 +124,13 @@ export default class UserService {
   async userAdd(
     signUpDto: SignUpDto,
   ): Promise<{ message: string; user?: User }> {
-    const { type, basic_info, contact_info } = signUpDto;
+    const { type, basic_info,fcmToken, contact_info, auth_info } = signUpDto;
     const { first_name, last_name, dob, gender } = basic_info;
     const { mobile_number, email } = contact_info;
+    const { password } = auth_info;
+
+    const rounds = this.configService.get('SALT_ROUNDS');
+    const hashedPassword = bcrypt.hashSync(password, Number(rounds));
 
     // Check email is already exists
     const sEmail = email.trim().toLowerCase();
@@ -123,10 +164,31 @@ export default class UserService {
 
     const user = await this.userModel.create({
       type,
+      fcmToken:"",
       basic_info: { first_name, last_name, dob, gender },
       contact_info: { mobile_number, email },
-      auth_info: { password: '' },
+      auth_info: { password: hashedPassword },
     });
+
+    // Send email with email and password
+    try {
+      // Send email
+      await this.mailService.sendMail({
+        to: user.contact_info.email,
+        subject: 'Account Created',
+        template: 'loginCredentials',
+        context: {
+          firstName: user.basic_info.first_name,
+          email: user.contact_info.email,
+          password:auth_info.password
+        },
+      });
+
+    } catch (error) {
+      throw new ConflictException(
+        `Failed to send email for user: ${error.message}`,
+      );
+    }
 
     if (user) {
       return { message: 'User added successfully' };
@@ -207,6 +269,17 @@ export default class UserService {
       );
     }
 
-    return { message: 'User deactivate email sent successfully' };
+    
+    try {
+      // Send notification to the deactivated user
+      await this.notificationService.sendNotification(userId, {
+        title: 'Account Deactivated',
+        body: 'Your account has been deactivated.',
+      });
+    } catch (error) {
+      console.error(`Failed to send notification for user ID ${userId}: ${error}`);
+    }
+
+    return { message: 'User deactivated successfully' };
   }
 }

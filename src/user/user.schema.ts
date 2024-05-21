@@ -33,6 +33,8 @@ export class ContactInfo {
   @Prop({ required: true, trim: true,unique:true,lowercase:true })
   @IsEmail()
   email: string;
+
+  
 }
 
 // Auth info
@@ -52,6 +54,10 @@ export class User {
     enum: [userTypes.admin, userTypes.user],
   })
   type: string;
+  
+  @Prop({ 
+    trim: true})
+  fcmToken: string;
 
   @Prop({
     trim: true,
