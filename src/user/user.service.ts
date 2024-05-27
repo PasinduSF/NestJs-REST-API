@@ -67,8 +67,9 @@ export default class UserService {
     const user = await this.userModel.findOne({ 'contact_info.email': email });
     
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid email');
     }
+
     const isPasswordMatched = bcrypt.compareSync(
       password,
       user.auth_info.password,
@@ -90,7 +91,7 @@ export default class UserService {
     const updatedUser = await this.userModel.findById(user._id);
   
     const payload = { id: user._id, type: user.type };
-    const access_token = await this.jwtService.signAsync(payload,{expiresIn: '1h'});
+    const access_token = await this.jwtService.signAsync(payload,{expiresIn: '24h'});
   
     return { access_token, user: updatedUser };
   }
@@ -161,7 +162,7 @@ export default class UserService {
     if (numberOfMobileNumbers > 3) {
       throw new ConflictException('Only allow three mobile numbers');
     }
-
+    
     const user = await this.userModel.create({
       type,
       fcmToken:"",
@@ -197,15 +198,6 @@ export default class UserService {
     }
   }
 
-  // Get user service -------------------------------------------------------------------------------
-  async getUsers(): Promise<User[]> {
-    const users = await this.userModel
-      .find({ type: { $ne: userTypes.admin } })
-      .sort({ createdAt: -1 }) // Sort by createdAt in descending order (newest first)
-      .exec();
-
-    return users;
-  }
 
   // Update user service -------------------------------------------------------------------------------
   async updateUser(
@@ -281,5 +273,36 @@ export default class UserService {
     }
 
     return { message: 'User deactivated successfully' };
+  }
+
+  async createUsers(createUserDtoS:SignUpDto[]){
+    for(const userDto of createUserDtoS){
+      await this.userAdd(userDto);
+    }
+  }
+
+  // Get user service -------------------------------------------------------------------------------
+  async getUsers(): Promise<User[]> {
+      const users = await this.userModel
+        .find({ type: { $ne: userTypes.admin } })
+        .sort({ createdAt: -1 }) 
+        .exec();
+  
+      return users;
+  }
+  
+
+  async getRecords(page: number, limit: number): Promise<{ records: User[], totalCount: number }> {
+    const skip = (page - 1) * limit;  
+    const [records, totalCount] = await Promise.all([
+      this.userModel
+        .find({ type: { $ne: userTypes.admin } })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.userModel.countDocuments({ type: { $ne: userTypes.admin } }),
+    ]);
+      return { records, totalCount };
   }
 }

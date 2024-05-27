@@ -20,7 +20,7 @@ class BasicInfo {
     @Transform(({ value }) => value.trim())
     @IsString()
     @IsNotEmpty()
-    dob: string;
+    dob: Date;
 
     @Transform(({ value }) => value.trim())
     @IsString()
@@ -60,6 +60,9 @@ class SignUpDto {
 
   @Transform(({ value }) => value.trim())
   fcmToken: string ;
+
+  @Transform(({ value }) => value.trim())
+  status: string ;
 
   @IsNotEmpty()
   @ValidateNested()

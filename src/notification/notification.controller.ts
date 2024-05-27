@@ -16,11 +16,11 @@ export class NotificationController {
     console.log('Received FCM token:', token);
     
     await this.notificationService.saveUserToken(userId, token);
-
     // Send a notification to the user
     await this.notificationService.sendNotification(userId, {
       title: 'WEB3GENES',
       body: 'Your account has been deactivated..',
     });
+    
   }
 }

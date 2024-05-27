@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
 import UserService from './user.service';
 import SignUpDto from './dto/signUp.dto';
 import UserLoginDto from './dto/login.dto';
@@ -23,17 +23,30 @@ export default class UserController {
   }
 
 // Login ----------------------------------------------------
-@Post("login")
-async login(
-  @Body() userLoginDto: UserLoginDto,
-  @Body('fcmToken') fcmToken: string, 
-  @Res() res: Response
-): Promise<Response<{ access_token: string; user: any }, Record<string, any>>> {
-  const { access_token, user } = await this.service.login(userLoginDto, fcmToken);
+// @Post("login")
+// async login(
+//   @Body() userLoginDto: UserLoginDto,
+//   @Body('fcmToken') fcmToken: string, 
+//   @Res() res: Response
+// ): Promise<Response<{ access_token: string; user: any }, Record<string, any>>> {
+//   const { access_token, user } = await this.service.login(userLoginDto, fcmToken);
+//   res.set({AccessTokens:access_token});
+//   return res.status(200).json({  user });
+// }
 
-  res.setHeader('Authorization', access_token);
-  return res.status(200).json({ access_token, user });
-}
+@Post("login")
+  async login(@Body() userLoginDto: UserLoginDto, @Body('fcmToken') fcmToken: string, @Res() res: Response): Promise<Response<{ access_token: string; user: any }, Record<string, any>>> {
+    try {
+      const { access_token ,user} = await this.service.login(userLoginDto,fcmToken);
+      res.set({ accessToken: access_token })
+      return res.status(200).json({user});
+    } catch (error) {
+      console.error('Error occurred during login:', error);
+      res.status(401).send('Invalid email or password');
+    }
+  }
+
+
 
 // userAdd ---------------------------------------------------------
   @UseGuards(AdminGuard)
@@ -70,6 +83,18 @@ async login(
     @Res() res: Response) {
       const result = await this.service.deactivateUser(userId);  
       return res.status(200).json({ result });
+  }
+
+   @UseGuards(AdminGuard)
+  @Get('getUserList')
+  async getRecords(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Res() res: Response
+  ): Promise<Response<{ records: User[] }>> {
+    const { records, totalCount } = await this.service.getRecords(page, limit);
+    res.set({ 'AllUserCount': totalCount.toString() });
+    return res.status(200).json({ records });
   }
 
 }
